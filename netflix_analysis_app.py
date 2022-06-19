@@ -20,7 +20,12 @@ tmdb_logo = Image.open('tmdb_logo.jpeg')
 st.image(tmdb_logo, caption='Powered by')
 
 #text
-st.markdown('enter text')
+st.markdown('Every online service that you use will store a surprising amount of data about you. \
+ This is my hobby project to make your personal data on the internet truly accessible to you!\
+Netflix is one of the companies who give you easy access to your own data. You can download here: **_netflix.com/youraccount_**')
+
+st.markdown('This Project is work in progress. Next goals are to integrate it with The Movie DB and allowing you to upload your own Netflix Export.\
+    If you have any suggestions on what to add to the analysis or want to talk about this project, feel free to reach out to me on **_linkedin.com/in/sebastian-ten-berge/_**')
 
 ## !!! next goal is to create option to upload own netflix file. 
 
