@@ -24,28 +24,40 @@ st.markdown('Every online service that you use will store a surprising amount of
  This is my hobby project to make your personal data on the internet truly accessible to you!\
 Netflix is one of the companies who give you easy access to your own data. You can download your own data here: **_netflix.com/youraccount_**')
 
-st.markdown('This Project is work in progress. Next goals are to integrate it with The Movie DB and allowing you to upload your own Netflix Export to gain insights into your own viewer behavior.\
+st.markdown('This Project is work in progress. Next goals are to integrate it with The Movie DB to get more exiting insights such as favorite movie genres and movie ratings.\
     If you have any suggestions on what to add to the analysis or want to talk about this project, feel free to reach out to me on **_linkedin.com/in/sebastian-ten-berge/_**')
 
 ## !!! next goal is to create option to upload own netflix file. 
 
-## create file import botton
-# uploaded_file = st.sidebar.file_uploader("upload file", type="zip")
+interaction_df = pd.read_csv('Files/ViewingActivity.csv')
+df_billing = pd.read_csv('Files/BillingHistory.csv')
+# IP Adress locations - where movies were watched
+streaming_locations_df = pd.read_csv('Files/IpAddressesStreaming.csv')
+
+# Sidebar 
+##########################################################################################
+
+# create file import botton
+uploaded_file = st.sidebar.file_uploader("upload file", type="zip")
+
+st.sidebar.markdown('**What happens to my netflix data if I upload it?** :thinking_face:')
+st.sidebar.markdown('In short, files are stored in memory, they get deleted immediately as soon as they’re not needed anymore. \
+        You can find more on streamlits own documentation:\
+         [where-file-uploader-store-when-deleted](https://docs.streamlit.io/knowledge-base/using-streamlit/where-file-uploader-store-when-deleted)', unsafe_allow_html=False )
+
 
 # Data import processing
 ##########################################################################################
 
 # analyse zip file
-# with ZipFile(uploaded_file, 'r') as zip:
-#     zip.extractall()
-
-
-# creates df from upload
-interaction_df = pd.read_csv('Files/ViewingActivity.csv')
-df_billing = pd.read_csv('Files/BillingHistory.csv')
-
-# IP Adress locations - where movies were watched
-streaming_locations_df = pd.read_csv('Files/IpAddressesStreaming.csv')
+if uploaded_file is not None:
+    with ZipFile(uploaded_file, 'r') as zip:
+        zip.extractall()
+        # # creates df from upload
+        interaction_df = pd.read_csv('./CONTENT_INTERACTION/ViewingActivity.csv')
+        df_billing = pd.read_csv('./PAYMENT_AND_BILLING/BillingHistory.csv')
+        # # IP Adress locations - where movies were watched
+        streaming_locations_df = pd.read_csv('./IP_ADDRESSES/IpAddressesStreaming.csv')
 
 # ISO Codes converter
 iso_df =pd.read_csv('Files/iso_codes.csv', header=None, names=['Country', 'iso_2', 'iso_3', 'UN_Code'])
@@ -71,9 +83,9 @@ currency = df_billing['Currency'].iloc[0:1, ]
 #viewing_statistics = [(interaction_df.Title.nunique(), interaction_df.Device_Type.nunique(), interaction_df.Country.nunique())]
 #df_viewing_statistics = pd.DataFrame(viewing_statistics, columns=['Titles', 'Devices', 'Country']).reset_index(drop=True)
 col1, col2, col3, col4 = st.columns(4)
-col1.metric('Titles', watched_df.Title.nunique())
-col2.metric( 'Unique Devices', watched_df.Device_Type.nunique())
-col3.metric('Country', watched_df.Country.nunique())
+col1.metric('Titles Watched', watched_df.Title.nunique())
+col2.metric('Unique Devices', watched_df.Device_Type.nunique())
+col3.metric('Countries Logged in from', watched_df.Country.nunique())
 col4.metric('Paid for Netflix', (list(currency)[0] + " " + str(np.round_(costs.astype(int), decimals=0))))
 
 
