@@ -204,3 +204,29 @@ fig4 = px.bar(df_devices_count, x= 'Device',  y="Count",
              color='Count',
              color_continuous_scale=["rgb(1,1,1)", "rgb(86,77,77)", "rgb(131,16,16)", "rgb(219,0,0)"])
 st.plotly_chart(fig4, use_container_width=True)
+
+
+
+
+# defining movie and series
+##########################################################################################
+watched_df["Show_Title"] = [s.partition(":")[0] for s in watched_df.Title]
+
+# filtering out seasons with the word Säsong, season, series, serie
+watched_df["temporary_brackets_removed_title"] = watched_df['Title'].str.replace('(', '')
+watched_df["Film_Type"] = np.where(watched_df.temporary_brackets_removed_title.astype(str).str.contains(pat = 'Season | Säsong | Series | Serie | Episode | Episod | Avsnitt', case = False), 'Series', 'Movie')
+watched_df = watched_df.drop('temporary_brackets_removed_title', 1)
+
+movies_watched = list(watched_df[(watched_df["Film_Type"] == 'Movie') & (watched_df["percent_watched2"] > 85)]["Title"])
+series_watched = list(watched_df[(watched_df["Film_Type"] == 'Series') & (watched_df["percent_watched2"] > 85)]["Show_Title"])
+
+
+
+# Most watched Movies
+##########################################################################################
+
+df_Movies_watched_cleaned_1 = watched_df[(watched_df["Film_Type"] == 'Movie') & (watched_df["percent_watched2"] > 85)]
+df_Movies_watched_frequency = df_Movies_watched_cleaned_1[['Profile_Name', 'Title', 'Film_Type']].groupby(['Profile_Name', 'Title'])['Film_Type'].count().reset_index().sort_values('Film_Type', ascending=False)
+df_Movies_watched_frequency.rename(columns = {'Film_Type':'Count'}, inplace = True)
+fig4 = px.histogram(df_Movies_watched_frequency.head(10), x='Title', y = 'Count', color = 'Count')
+st.plotly_chart(fig4, use_container_width=True)
