@@ -90,12 +90,85 @@ col4.metric('Paid for Netflix', (list(currency)[0] + " " + str(np.round_(costs.a
 
 
 
+# Duration watched Netflix
+
+##########################################################################################
+
+watched_df['watched_minutes'] = watched_df['Duration'].str.split(':').apply(lambda x: int(x[0]) * 60 + int(x[1]))
+watched_df['duration_minutes'] = watched_df['Bookmark'].str.split(':').apply(lambda x: int(x[0]) * 60 + int(x[1]))
+watched_df['watched_hours'] = watched_df['watched_minutes'] / 60
+watched_df['percent_watched'] = watched_df['watched_minutes'] / watched_df['duration_minutes'] *100
+watched_df['percent_watched2'] = 5 * round(watched_df['percent_watched']/5)
+total_watchtime_df =  watched_df.groupby(['Profile_Name'],as_index=False).sum().sort_values('watched_hours')
+
+fig3 = px.bar(total_watchtime_df, x= 'Profile_Name',  y="watched_hours",
+             color="watched_hours",
+             color_continuous_scale=["rgb(1,1,1)", "rgb(86,77,77)", "rgb(131,16,16)", "rgb(219,0,0)"],
+             title="Hours Spent Watching Netflix")
+st.plotly_chart(fig3, use_container_width=True)
+
+
+# defining movie and series
+#########################################################################################
+watched_df["Show_Title"] = [s.partition(":")[0] for s in watched_df.Title]
+
+# filtering out seasons with the word Säsong, season, series, serie
+watched_df["temporary_brackets_removed_title"] = watched_df['Title'].str.replace('(', '')
+watched_df["Film_Type"] = np.where(watched_df.temporary_brackets_removed_title.astype(str).str.contains(pat = 'Season | Säsong | Series | Serie | Episode | Episod | Avsnitt', case = False), 'Series', 'Movie')
+watched_df = watched_df.drop('temporary_brackets_removed_title', 1)
+
+movies_watched = list(watched_df[(watched_df["Film_Type"] == 'Movie') & (watched_df["percent_watched2"] > 85)]["Title"])
+series_watched = list(watched_df[(watched_df["Film_Type"] == 'Series') & (watched_df["percent_watched2"] > 85)]["Show_Title"])
+
+
+# Users Multi Select Button
+##########################################################################################
+
+users = watched_df.Profile_Name.unique()
+
+user_radio_button_1 = st.sidebar.multiselect("Netflix Account", users, users)
+
+# Most watched Movies
+##########################################################################################
+
+film_type = ['Movie', 'Series']
+
+film_type_radio_button_1 = st.radio("Movies or Series", film_type)
+
+if film_type_radio_button_1 == 'Movie':
+    df_Movies_watched_cleaned_1 = watched_df[(watched_df["Film_Type"] == 'Movie') & (watched_df["percent_watched2"] > 85)]
+    df_Movies_watched_frequency = df_Movies_watched_cleaned_1[['Profile_Name', 'Title', 'Film_Type']].groupby(['Profile_Name', 'Title'])['Film_Type'].count().reset_index()
+    df_Movies_watched_frequency.rename(columns = {'Film_Type':'Count'}, inplace = True)
+    df_Movies_watched_frequency = df_Movies_watched_frequency.sort_values('Count', ascending=False)
+    fig5 = px.bar(df_Movies_watched_frequency[df_Movies_watched_frequency['Profile_Name'].isin(user_radio_button_1)].head(10),
+                         x='Title',
+                         y = 'Count', 
+                         color = 'Profile_Name',
+                         color_continuous_scale=["rgb(1,1,1)", "rgb(86,77,77)", "rgb(131,16,16)", "rgb(219,0,0)"],
+                         title="Movies"
+                         )
+    st.plotly_chart(fig5, use_container_width=True)
+
+# Most watched Series
+##########################################################################################
+if film_type_radio_button_1 == 'Series':
+    df_series_watched_cleaned_1 = watched_df[(watched_df["Film_Type"] == 'Series') & (watched_df["percent_watched2"] > 85)]
+    df_series_watched_frequency = df_series_watched_cleaned_1[['Profile_Name', 'Show_Title', 'Film_Type']].groupby(['Profile_Name', 'Show_Title'])['Film_Type'].count().reset_index().sort_values('Film_Type', ascending=False)
+    df_series_watched_frequency.rename(columns = {'Film_Type':'Count'}, inplace = True)
+    fig6 = px.bar(df_series_watched_frequency[df_series_watched_frequency['Profile_Name'].isin(user_radio_button_1)].head(10), 
+                        x='Show_Title', 
+                        y = 'Count', 
+                        color = 'Profile_Name',
+                        color_continuous_scale=["rgb(1,1,1)", "rgb(86,77,77)", "rgb(131,16,16)", "rgb(219,0,0)"],
+                        title="Series")
+    st.plotly_chart(fig6, use_container_width=True)
+
 
 # Viewing geo location
 ##########################################################################################
 
 
-streaming_country_df = watched_df.groupby(by='Country', as_index=False).agg({'Start_Time': pd.Series.nunique})
+streaming_country_df = watched_df[watched_df['Profile_Name'].isin(user_radio_button_1)].groupby(by='Country', as_index=False).agg({'Start_Time': pd.Series.nunique})
 streaming_country_df['Country'] = streaming_country_df['Country'].astype(str).str[0:2]
 streaming_country_df = streaming_country_df.merge(iso_df,how='inner',left_on=['Country'],right_on=['iso_2'])
 
@@ -107,10 +180,42 @@ fig = px.choropleth(streaming_country_df,                            # Input Dat
                          hover_name= 'Country_y',              # identify hover name
                          projection= 'natural earth',        # select projection
                          range_color=[0,streaming_country_df['Start_Time'].max()],
-                         labels={'Start_Time':'Series/Movies Watched'},
-                         title= 'countries viewed from')
+                         labels={'Start_Time':'Hours Series/Movies Watched'},
+                         title= 'Countries viewed from')
 st.plotly_chart(fig)
 fig.write_html("example_map.html")
+
+
+# Devices Used to Watch Netflix
+
+##########################################################################################
+
+word_count_device = watched_df[watched_df['Profile_Name'].isin(user_radio_button_1)].Device_Type.str.split(expand=True).stack().value_counts()
+df_word_count_device = word_count_device.to_frame()
+df_word_count_device.reset_index(inplace=True)
+df_word_count_device = df_word_count_device.rename(columns = {'index':'sub_device', 0:'Count'})
+
+devices = ['tv', 'phone', 'ipad', 'tablet', 'pc', 'mac', 'vr', 'iphone', 'chromecast'] 
+
+# selecting rows based on condition 
+df_devices_count = df_word_count_device[df_word_count_device['sub_device'].str.lower().isin(devices)] 
+
+device_and_categories = {'TV': 'TV','iPad': 'Tablet', 'PC': 'PC', 'Chromecast': 'TV', 
+                        'MAC': 'PC', 'iPhone': 'Phone', 'Tablet': 'Tablet', 'Phone':'Phone', 'VR': 'VR'}
+
+df_devices_count['Device'] = df_devices_count['sub_device'].map(device_and_categories)
+df_devices_count.reset_index(drop=True, inplace=True)
+df_devices_count = df_devices_count.drop(['sub_device'], axis = 1)
+
+df_devices_count = df_devices_count.groupby(['Device']).sum(['Count']).reset_index().sort_values(['Count'])
+
+fig4 = px.bar(df_devices_count, x= 'Device',  y="Count",
+             title="Most Popular Device to Watch from",
+             color='Count',
+             color_continuous_scale=["rgb(1,1,1)", "rgb(86,77,77)", "rgb(131,16,16)", "rgb(219,0,0)"])
+st.plotly_chart(fig4, use_container_width=True)
+
+
 
 # Most Common Times to Watch Netflix
 
@@ -143,90 +248,18 @@ heatmap_df = heatmap_total_df.pivot_table(values='Counts', index=['Hour', 'Profi
 
 ## Visualizing the heatmap
 
-users = heatmap_df.index.get_level_values('Profile_Name').unique()
+users2 = heatmap_df.index.get_level_values('Profile_Name').unique()
 
-user_radio_button_1 = st.radio("Netflix Account", users)
+user_radio_button_2 = st.radio("Netflix Account", users2)
 
 
 fig2, ax = plt.subplots(figsize=(15, 10))
 black_red = LinearSegmentedColormap.from_list('black_red', ['white', 'darkgrey', 'darkred', 'red'])
-sns.heatmap(heatmap_df[heatmap_df.index.get_level_values('Profile_Name').isin([user_radio_button_1])].droplevel(1, axis=0),
+sns.heatmap(heatmap_df[heatmap_df.index.get_level_values('Profile_Name').isin([user_radio_button_2])].droplevel(1, axis=0),
             annot=True, fmt='g', cmap=black_red, ax=ax)
-ax.set_title(user_radio_button_1 + "'s" + " Netflix Log in Times", fontsize=20)
+ax.set_title(user_radio_button_2 + "'s" + " Netflix Log in Times", fontsize=20)
 ax.set_xlabel('Weekday', fontsize=15)  
 ax.set_ylabel('Time', fontsize=15) 
 # ax.set_yticklabels(range(0,24), rotation=0)
 st.pyplot(fig2)
 
-
-# Duration watched Netflix
-
-##########################################################################################
-
-watched_df['watched_minutes'] = watched_df['Duration'].str.split(':').apply(lambda x: int(x[0]) * 60 + int(x[1]))
-watched_df['duration_minutes'] = watched_df['Bookmark'].str.split(':').apply(lambda x: int(x[0]) * 60 + int(x[1]))
-watched_df['watched_hours'] = watched_df['watched_minutes'] / 60
-watched_df['percent_watched'] = watched_df['watched_minutes'] / watched_df['duration_minutes'] *100
-watched_df['percent_watched2'] = 5 * round(watched_df['percent_watched']/5)
-total_watchtime_df =  watched_df.groupby(['Profile_Name'],as_index=False).sum().sort_values('watched_hours')
-
-fig3 = px.bar(total_watchtime_df, x= 'Profile_Name',  y="watched_hours",
-             color="watched_hours",
-             color_continuous_scale=["rgb(1,1,1)", "rgb(86,77,77)", "rgb(131,16,16)", "rgb(219,0,0)"],
-             title="Hours Spent Watching Netflix")
-st.plotly_chart(fig3, use_container_width=True)
-
-# Devices Used to Watch Netflix
-
-##########################################################################################
-
-word_count_device = watched_df.Device_Type.str.split(expand=True).stack().value_counts()
-df_word_count_device = word_count_device.to_frame()
-df_word_count_device.reset_index(inplace=True)
-df_word_count_device = df_word_count_device.rename(columns = {'index':'sub_device', 0:'Count'})
-
-devices = ['tv', 'phone', 'ipad', 'tablet', 'pc', 'mac', 'vr', 'iphone', 'chromecast'] 
-
-# selecting rows based on condition 
-df_devices_count = df_word_count_device[df_word_count_device['sub_device'].str.lower().isin(devices)] 
-
-device_and_categories = {'TV': 'TV','iPad': 'Tablet', 'PC': 'PC', 'Chromecast': 'TV', 
-                        'MAC': 'PC', 'iPhone': 'Phone', 'Tablet': 'Tablet', 'Phone':'Phone', 'VR': 'VR'}
-
-df_devices_count['Device'] = df_devices_count['sub_device'].map(device_and_categories)
-df_devices_count.reset_index(drop=True, inplace=True)
-df_devices_count = df_devices_count.drop(['sub_device'], axis = 1)
-
-df_devices_count = df_devices_count.groupby(['Device']).sum(['Count']).reset_index().sort_values(['Count'])
-
-fig4 = px.bar(df_devices_count, x= 'Device',  y="Count",
-             title="Most Popular Device to Watch from",
-             color='Count',
-             color_continuous_scale=["rgb(1,1,1)", "rgb(86,77,77)", "rgb(131,16,16)", "rgb(219,0,0)"])
-st.plotly_chart(fig4, use_container_width=True)
-
-
-
-
-# defining movie and series
-##########################################################################################
-watched_df["Show_Title"] = [s.partition(":")[0] for s in watched_df.Title]
-
-# filtering out seasons with the word Säsong, season, series, serie
-watched_df["temporary_brackets_removed_title"] = watched_df['Title'].str.replace('(', '')
-watched_df["Film_Type"] = np.where(watched_df.temporary_brackets_removed_title.astype(str).str.contains(pat = 'Season | Säsong | Series | Serie | Episode | Episod | Avsnitt', case = False), 'Series', 'Movie')
-watched_df = watched_df.drop('temporary_brackets_removed_title', 1)
-
-movies_watched = list(watched_df[(watched_df["Film_Type"] == 'Movie') & (watched_df["percent_watched2"] > 85)]["Title"])
-series_watched = list(watched_df[(watched_df["Film_Type"] == 'Series') & (watched_df["percent_watched2"] > 85)]["Show_Title"])
-
-
-
-# Most watched Movies
-##########################################################################################
-
-df_Movies_watched_cleaned_1 = watched_df[(watched_df["Film_Type"] == 'Movie') & (watched_df["percent_watched2"] > 85)]
-df_Movies_watched_frequency = df_Movies_watched_cleaned_1[['Profile_Name', 'Title', 'Film_Type']].groupby(['Profile_Name', 'Title'])['Film_Type'].count().reset_index().sort_values('Film_Type', ascending=False)
-df_Movies_watched_frequency.rename(columns = {'Film_Type':'Count'}, inplace = True)
-fig4 = px.histogram(df_Movies_watched_frequency.head(10), x='Title', y = 'Count', color = 'Count')
-st.plotly_chart(fig4, use_container_width=True)
