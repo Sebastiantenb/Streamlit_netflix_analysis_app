@@ -117,10 +117,6 @@ watched_df["temporary_brackets_removed_title"] = watched_df['Title'].str.replace
 watched_df["Film_Type"] = np.where(watched_df.temporary_brackets_removed_title.astype(str).str.contains(pat = 'Season | Säsong | Series | Serie | Episode | Episod | Avsnitt', case = False), 'Series', 'Movie')
 watched_df = watched_df.drop('temporary_brackets_removed_title', 1)
 
-movies_watched = list(watched_df[(watched_df["Film_Type"] == 'Movie') & (watched_df["percent_watched2"] > 85)]["Title"])
-series_watched = list(watched_df[(watched_df["Film_Type"] == 'Series') & (watched_df["percent_watched2"] > 85)]["Show_Title"])
-
-
 # Users Multi Select Button
 ##########################################################################################
 
@@ -144,9 +140,10 @@ if film_type_radio_button_1 == 'Movie':
                          x='Title',
                          y = 'Count', 
                          color = 'Profile_Name',
-                         color_continuous_scale=["rgb(1,1,1)", "rgb(86,77,77)", "rgb(131,16,16)", "rgb(219,0,0)"],
+                         color_discrete_sequence=["rgb(1,1,1)", "rgb(219,0,0)", "rgb(86,77,77)", "rgb(131,16,16)"],
                          title="Movies"
                          )
+    fig5.update_layout(xaxis={'categoryorder':'total descending'})
     st.plotly_chart(fig5, use_container_width=True)
 
 # Most watched Series
@@ -159,8 +156,9 @@ if film_type_radio_button_1 == 'Series':
                         x='Show_Title', 
                         y = 'Count', 
                         color = 'Profile_Name',
-                        color_continuous_scale=["rgb(1,1,1)", "rgb(86,77,77)", "rgb(131,16,16)", "rgb(219,0,0)"],
+                        color_discrete_sequence=["rgb(1,1,1)", "rgb(219,0,0)", "rgb(86,77,77)", "rgb(131,16,16)"],
                         title="Series")
+    fig6.update_layout(xaxis={'categoryorder':'total descending'})
     st.plotly_chart(fig6, use_container_width=True)
 
 
