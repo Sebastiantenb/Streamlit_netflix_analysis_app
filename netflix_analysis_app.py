@@ -30,13 +30,13 @@ st.image(tmdb_logo, caption='Powered by')
 st.markdown('Every online service which you use will store a surprising amount of data about you. \
  This is my hobby project to make your personal data more accessible and understandable to you!\
 Netflix is one of the companies who make your data easily accessible to you. \
-    [Download your Netflix Data here](netflix.com/youraccount)', unsafe_allow_html=False)
+    [Download your Netflix Data here](https://www.netflix.com/youraccount)', unsafe_allow_html=False)
 
 with st.expander('Want to know more? Or Do you have any questions or feedback?'):
     st.markdown('I hope you enjoyed the insights to your Netflix Data :blush:.\
             Let me know if there is anything else you would like to know about your Netflix data.\
             I am happy about any suggestions, feedback, or just to talk about this project or anything Data. \
-            Feel free to reach out to me on [linkedin.com/in/sebastian-ten-berge](inkedin.com/in/sebastian-ten-berge)')
+            Feel free to reach out to me on [linkedin.com/in/sebastian-ten-berge](https://www.linkedin.com/in/sebastian-ten-berge/)')
 
 ## !!! next goal is to create option to upload own netflix file. 
 
