@@ -279,6 +279,7 @@ st.pyplot(fig2)
 
 ##########################################################################################
 
+tmdb_api_key = st.secrets["tmdb_api_key"]
 
 @st.cache
 def json_of_url(url):
