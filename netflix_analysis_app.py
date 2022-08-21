@@ -15,6 +15,9 @@ import urllib.parse
 import json
 import requests
 
+# App Theme
+##########################################################################################
+
 
 # APP UI MODULES
 ##########################################################################################
@@ -30,13 +33,29 @@ st.image(tmdb_logo, caption='Powered by')
 st.markdown('Every online service which you use will store a surprising amount of data about you. \
  This is my hobby project to make your personal data more accessible and understandable to you!\
 Netflix is one of the companies who make your data easily accessible to you. \
-    [Download your Netflix Data here](https://www.netflix.com/youraccount)', unsafe_allow_html=False)
+    Download your Netflix Data [here in your Netflix settings](https://www.netflix.com/youraccount)', unsafe_allow_html=False)
 
 with st.expander('Want to know more? Or Do you have any questions or feedback?'):
     st.markdown('I hope you enjoyed the insights to your Netflix Data :blush:.\
             Let me know if there is anything else you would like to know about your Netflix data.\
             I am happy about any suggestions, feedback, or just to talk about this project or anything Data. \
             Feel free to reach out to me on [linkedin.com/in/sebastian-ten-berge](https://www.linkedin.com/in/sebastian-ten-berge/)')
+
+with st.expander('FAQ'):
+     st.markdown("**Q.1: Is my data stored if I upload it?**  \n"
+                "A.1: No. files are stored in memory, they get deleted immediately as soon as they’re not needed anymore.\
+                You can find more in depth information in streamlits own documentation:\
+                [where-file-uploader-store-when-deleted](https://docs.streamlit.io/knowledge-base/using-streamlit/where-file-uploader-store-when-deleted)."
+                )
+     st.markdown("**Q.2: What data does the Netflix Export invlude?**  \n"
+                "A.2: The CSV's within the Zip folder of your Netflix data includes an array of different information.  \n"
+                "It contains all the movies and series that you've watched. Including when and the city you watched it from.  \n"
+                "When it comes to **sensitive data**, the export includes the account administrators email and the last 4 digits of the credit card used.  \n"
+                "This information is not saved or visible when using this app.  \n"
+                "If you still want to try this app, you can remove those files or specific columns from your CSV's before uploading your data."
+                )
+
+     
 
 ## !!! next goal is to create option to upload own netflix file. 
 
